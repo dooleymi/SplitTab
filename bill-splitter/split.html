@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SplitTab — Who had what?</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --light: #f3f4f6;
+      --accent: #111;
+      --accent-text: #fff;
+      --selected: #111;
+      --selected-text: #fff;
+      --green: #10b981;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(250,250,250,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      gap: 12px;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 6px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: color 0.15s;
+    }
+
+    .btn-back:hover { color: var(--text); }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    /* ── Section cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    /* ── Items list ── */
+    .item-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+    }
+
+    .item-row:last-child { border-bottom: none; }
+
+    .item-name-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      cursor: text;
+      min-width: 0;
+    }
+
+    .item-name-input:focus {
+      background: var(--light);
+      border-radius: 6px;
+      padding: 2px 6px;
+      margin: -2px -6px;
+    }
+
+    .item-price-input {
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--text);
+      width: 72px;
+      text-align: right;
+      outline: none;
+      cursor: text;
+      border-radius: 6px;
+      padding: 2px 4px;
+    }
+
+    .item-price-input:focus {
+      border-color: var(--border);
+      background: var(--light);
+    }
+
+    .btn-delete {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .btn-delete:hover { background: #fee2e2; color: #ef4444; }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .summary-row.total-row {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .summary-row .editable-price {
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: inherit;
+      color: inherit;
+      width: 80px;
+      text-align: right;
+      outline: none;
+      border-radius: 6px;
+      padding: 2px 4px;
+    }
+
+    .summary-row .editable-price:focus {
+      border-color: var(--border);
+      background: var(--light);
+    }
+
+    /* ── Add item button ── */
+    .btn-add-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px 18px;
+      background: none;
+      border: none;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-add-item:hover { background: var(--light); color: var(--text); }
+
+    /* ── People section ── */
+    .people-count {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .count-btn {
+      width: 38px;
+      height: 38px;
+      background: var(--light);
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text);
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .count-btn:hover { background: var(--border); }
+    .count-btn:disabled { opacity: 0.35; cursor: default; }
+
+    .count-display {
+      width: 50px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .people-names {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      padding: 16px 18px;
+    }
+
+    .person-name-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .person-name-input:focus { border-color: var(--accent); }
+
+    /* ── Selection section ── */
+    .selection-hint {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 10px 18px 14px;
+    }
+
+    .selection-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .selection-item:last-child { border-bottom: none; }
+
+    .selection-item-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+
+    .selection-item-name {
+      font-size: 15px;
+      font-weight: 500;
+      flex: 1;
+      margin-right: 8px;
+    }
+
+    .selection-item-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .person-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .person-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    .person-chip:hover {
+      border-color: #9ca3af;
+      color: var(--text);
+    }
+
+    .person-chip.selected {
+      background: var(--selected);
+      border-color: var(--selected);
+      color: var(--selected-text);
+    }
+
+    .chip-check {
+      width: 14px;
+      height: 14px;
+      display: none;
+    }
+
+    .person-chip.selected .chip-check { display: inline; }
+
+    /* ── Summary section ── */
+    .summary-cards {
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .person-summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .person-summary-name {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      padding: 3px 0;
+    }
+
+    .summary-line.total {
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      padding-top: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .summary-breakdown {
+      margin-top: 6px;
+    }
+
+    .breakdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 2px 0;
+    }
+
+    .breakdown-item-name {
+      flex: 1;
+      margin-right: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ── Unassigned items warning ── */
+    .unassigned-warning {
+      display: none;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #92400e;
+      margin: 12px 0 0;
+    }
+
+    /* ── Copy button ── */
+    .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+
+    .btn-copy:hover { background: var(--light); color: var(--text); }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .summary-cards { grid-template-columns: 1fr 1fr; }
+      .people-names { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <button class="btn-back" onclick="window.location.href='index.html'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    Back
+  </button>
+  <div class="header-logo">
+    <svg width="18" height="22" viewBox="0 0 28 34" fill="none">
+      <path d="M14 2C14 2 21 10 21 19C21 24.5 18 29 14 31C10 29 7 24.5 7 19C7 10 14 2 14 2Z" fill="#111"/>
+      <path d="M14 17C14 17 17 20.5 17 24C17 26.2 15.8 27.8 14 28.8C12.2 27.8 11 26.2 11 24C11 20.5 14 17 14 17Z" fill="white"/>
+    </svg>
+    SplitTab
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Parsing warnings -->
+  <div id="warnings-banner" style="display:none; background:#fffbeb; border:1px solid #fbbf24; border-radius:10px; padding:14px 16px; margin-top:20px; font-size:13px; color:#92400e; line-height:1.6;">
+    <strong style="display:block; margin-bottom:4px;">⚠️ Some items may be missing</strong>
+    <ul id="warnings-list" style="margin:0; padding-left:18px;"></ul>
+  </div>
+
+  <!-- Items on the bill -->
+  <div class="card" id="items-card">
+    <div class="card-header">
+      <span class="card-title">Items on the bill</span>
+      <span id="item-count-badge" style="font-size:12px; color: var(--muted)"></span>
+    </div>
+    <div id="items-list"></div>
+    <button class="btn-add-item" onclick="addItem()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Add item manually
+    </button>
+    <div id="receipt-totals"></div>
+  </div>
+
+  <!-- People -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">How many people?</span>
+      <div class="people-count">
+        <button class="count-btn" id="btn-minus" onclick="adjustPeople(-1)">−</button>
+        <div class="count-display" id="people-count-display">2</div>
+        <button class="count-btn" onclick="adjustPeople(1)">+</button>
+      </div>
+    </div>
+    <div class="people-names" id="people-names"></div>
+  </div>
+
+  <!-- Who had what -->
+  <div class="card" id="selection-card">
+    <div class="card-header">
+      <span class="card-title">Who had what?</span>
+      <span style="font-size:12px; color: var(--muted)">Tap to toggle</span>
+    </div>
+    <div class="selection-hint">Tap a person's name next to each item to mark who shared it.</div>
+    <div id="selection-list"></div>
+    <div class="unassigned-warning" id="unassigned-warning">
+      ⚠️ Some items haven't been assigned to anyone yet.
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card" id="summary-card">
+    <div class="card-header">
+      <span class="card-title">Summary</span>
+      <button class="btn-copy" onclick="copySummary()" id="copy-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+        </svg>
+        Copy
+      </button>
+    </div>
+    <div id="summary-content">
+      <div class="empty-state">
+        <div class="empty-state-icon">👆</div>
+        <h3>Select items above</h3>
+        <p>Tap who shared each item and the split will appear here automatically.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw OCR debug panel -->
+  <div class="card" id="ocr-debug-card" style="margin-top:20px; display:none;">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleOcrDebug()">
+      <span class="card-title">Raw OCR text</span>
+      <span id="ocr-toggle-label" style="font-size:12px; color:var(--muted)">Show ▼</span>
+    </div>
+    <div id="ocr-debug-body" style="display:none; padding:14px 18px;">
+      <p style="font-size:12px; color:var(--muted); margin-bottom:8px;">
+        This is the raw text Tesseract extracted from your image. Use it to identify why items may be missing or misread.
+      </p>
+      <pre id="ocr-raw-text" style="font-size:11px; color:#374151; background:var(--light); border-radius:6px; padding:12px; overflow-x:auto; white-space:pre-wrap; line-height:1.6; max-height:300px; overflow-y:auto;"></pre>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── State ───────────────────────────────────────────────────────────────
+
+  let receiptData = {
+    rawText: '', currency: '£',
+    items: [], serviceCharge: null, subtotal: null, total: null
+  };
+
+  let people = []; // [{ id, name }]
+  let selections = {}; // { itemId: Set<personId> }
+  let currency = '£';
+  let idCounter = 0;
+
+  function uid() { return 'id_' + (++idCounter) + '_' + Math.random().toString(36).slice(2, 5); }
+
+  // ─── Init ─────────────────────────────────────────────────────────────────
+
+  function init() {
+    const raw = sessionStorage.getItem('receiptData');
+    if (raw) {
+      try {
+        const d = JSON.parse(raw);
+        receiptData = d;
+        currency = d.currency || '£';
+      } catch(e) {}
+    }
+
+    // Always show the raw OCR/AI debug panel if there's output text
+    if (receiptData.rawText) {
+      const card  = document.getElementById('ocr-debug-card');
+      const title = card.querySelector('.card-title');
+      card.style.display = 'block';
+      document.getElementById('ocr-raw-text').textContent = receiptData.rawText;
+      // Label the panel based on which backend produced the output
+      const isClaude = receiptData.rawText.trim().startsWith('{') || receiptData.rawText.trim().startsWith('[');
+      title.textContent = isClaude ? 'Claude AI response' : 'Raw OCR text';
+    }
+
+    // Show any parsing warnings
+    if (receiptData.warnings && receiptData.warnings.length > 0) {
+      const banner = document.getElementById('warnings-banner');
+      const list   = document.getElementById('warnings-list');
+      banner.style.display = 'block';
+      list.innerHTML = receiptData.warnings.map(w => `<li>${w}</li>`).join('');
+    }
+
+    // Default to 2 people
+    setPeopleCount(2);
+
+    // Initialise selections
+    receiptData.items.forEach(item => {
+      selections[item.id] = new Set();
+    });
+
+    renderAll();
+  }
+
+  // ─── People management ────────────────────────────────────────────────────
+
+  function adjustPeople(delta) {
+    const n = Math.max(1, Math.min(12, people.length + delta));
+    setPeopleCount(n);
+  }
+
+  function setPeopleCount(n) {
+    const current = people.length;
+    if (n > current) {
+      for (let i = current; i < n; i++) {
+        people.push({ id: uid(), name: '' });
+      }
+    } else {
+      people = people.slice(0, n);
+    }
+    document.getElementById('people-count-display').textContent = people.length;
+    document.getElementById('btn-minus').disabled = people.length <= 1;
+    renderPeople();
+    renderSelection();
+    renderSummary();
+  }
+
+  function getPersonName(person, index) {
+    return person.name.trim() || `Person ${index + 1}`;
+  }
+
+  // ─── Items management ─────────────────────────────────────────────────────
+
+  function addItem() {
+    const item = { id: uid(), name: '', price: 0 };
+    receiptData.items.push(item);
+    selections[item.id] = new Set();
+    renderItems();
+    renderSelection();
+    renderSummary();
+    // Focus the new item's name input
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('.item-name-input');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+  }
+
+  function deleteItem(id) {
+    receiptData.items = receiptData.items.filter(i => i.id !== id);
+    delete selections[id];
+    renderItems();
+    renderReceiptTotals();
+    renderSelection();
+    renderSummary();
+  }
+
+  function updateItemName(id, value) {
+    const item = receiptData.items.find(i => i.id === id);
+    if (item) item.name = value;
+    renderSummary();
+  }
+
+  function updateItemPrice(id, value) {
+    const item = receiptData.items.find(i => i.id === id);
+    if (item) {
+      item.price = Math.round(parseFloat(value.replace(',', '.') || '0') * 100) / 100;
+      renderReceiptTotals();
+      renderSummary();
+    }
+  }
+
+  function updateServiceCharge(value) {
+    const price = Math.round(parseFloat(value.replace(',', '.') || '0') * 100) / 100;
+    if (!receiptData.serviceCharge) {
+      receiptData.serviceCharge = { name: 'Service Charge', price };
+    } else {
+      receiptData.serviceCharge.price = price;
+    }
+    renderReceiptTotals();
+    renderSummary();
+  }
+
+  // ─── Selections ───────────────────────────────────────────────────────────
+
+  function toggleSelection(itemId, personId) {
+    const sel = selections[itemId];
+    if (!sel) return;
+    if (sel.has(personId)) sel.delete(personId);
+    else sel.add(personId);
+
+    // Update chip UI
+    const chip = document.querySelector(`[data-item="${itemId}"][data-person="${personId}"]`);
+    if (chip) chip.classList.toggle('selected', sel.has(personId));
+
+    renderSummary();
+    checkUnassigned();
+  }
+
+  function checkUnassigned() {
+    const anyUnassigned = receiptData.items.some(item => {
+      const s = selections[item.id];
+      return !s || s.size === 0;
+    });
+    document.getElementById('unassigned-warning').style.display =
+      anyUnassigned && receiptData.items.length > 0 ? 'block' : 'none';
+  }
+
+  // ─── Calculations ──────────────────────────────────────────────────────────
+
+  function calculate() {
+    const results = {};
+    people.forEach((p, i) => {
+      results[p.id] = { name: getPersonName(p, i), subtotal: 0, service: 0, items: [] };
+    });
+
+    let assignedSubtotal = 0;
+
+    receiptData.items.forEach(item => {
+      const assignedTo = [...(selections[item.id] || [])].filter(pid => results[pid]);
+      if (assignedTo.length === 0) return;
+
+      const share = Math.round((item.price / assignedTo.length) * 100) / 100;
+      assignedTo.forEach(pid => {
+        results[pid].subtotal += share;
+        results[pid].items.push({ name: item.name || 'Item', price: share, shared: assignedTo.length });
+      });
+      assignedSubtotal += item.price;
+    });
+
+    // Round subtotals
+    Object.values(results).forEach(r => {
+      r.subtotal = Math.round(r.subtotal * 100) / 100;
+    });
+
+    // Distribute service charge proportionally
+    const sc = receiptData.serviceCharge ? receiptData.serviceCharge.price : 0;
+    if (sc > 0 && assignedSubtotal > 0) {
+      people.forEach(p => {
+        const proportion = results[p.id].subtotal / assignedSubtotal;
+        results[p.id].service = Math.round(sc * proportion * 100) / 100;
+      });
+    }
+
+    return results;
+  }
+
+  // ─── Rendering ────────────────────────────────────────────────────────────
+
+  function renderAll() {
+    renderItems();
+    renderReceiptTotals();
+    renderPeople();
+    renderSelection();
+    renderSummary();
+    updateItemCountBadge();
+  }
+
+  function fmt(n) {
+    return currency + n.toFixed(2);
+  }
+
+  function updateItemCountBadge() {
+    const badge = document.getElementById('item-count-badge');
+    badge.textContent = receiptData.items.length
+      ? `${receiptData.items.length} item${receiptData.items.length !== 1 ? 's' : ''}`
+      : 'No items yet';
+  }
+
+  function renderItems() {
+    const list = document.getElementById('items-list');
+    updateItemCountBadge();
+
+    if (receiptData.items.length === 0) {
+      list.innerHTML = `
+        <div style="padding:20px 18px; color:var(--muted); font-size:14px; text-align:center">
+          No items scanned — add them manually below.
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = receiptData.items.map(item => `
+      <div class="item-row" data-item-id="${item.id}">
+        <input
+          class="item-name-input"
+          type="text"
+          value="${escHtml(item.name)}"
+          placeholder="Item name"
+          onchange="updateItemName('${item.id}', this.value)"
+          onblur="updateItemName('${item.id}', this.value)"
+        >
+        <span style="color:var(--muted);font-size:13px;flex-shrink:0">${currency}</span>
+        <input
+          class="item-price-input"
+          type="number"
+          step="0.01"
+          min="0"
+          value="${item.price > 0 ? item.price.toFixed(2) : ''}"
+          placeholder="0.00"
+          onchange="updateItemPrice('${item.id}', this.value)"
+          onblur="updateItemPrice('${item.id}', this.value)"
+        >
+        <button class="btn-delete" onclick="deleteItem('${item.id}')" title="Remove item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function renderReceiptTotals() {
+    const el = document.getElementById('receipt-totals');
+    const itemsSubtotal = receiptData.items.reduce((s, i) => s + i.price, 0);
+    const sc = receiptData.serviceCharge ? receiptData.serviceCharge.price : 0;
+    const grandTotal = Math.round((itemsSubtotal + sc) * 100) / 100;
+
+    el.innerHTML = `
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>${fmt(itemsSubtotal)}</span>
+      </div>
+      <div class="summary-row">
+        <span>${receiptData.serviceCharge ? escHtml(receiptData.serviceCharge.name) : 'Service charge'}</span>
+        <span style="display:flex;align-items:center;gap:4px">
+          <span style="color:var(--muted);font-size:13px">${currency}</span>
+          <input
+            class="editable-price"
+            type="number"
+            step="0.01"
+            min="0"
+            value="${sc > 0 ? sc.toFixed(2) : ''}"
+            placeholder="0.00"
+            title="Edit service charge"
+            onchange="updateServiceCharge(this.value)"
+            onblur="updateServiceCharge(this.value)"
+          >
+        </span>
+      </div>
+      <div class="summary-row total-row">
+        <span>Total</span>
+        <span>${fmt(grandTotal)}</span>
+      </div>
+    `;
+  }
+
+  function renderPeople() {
+    const el = document.getElementById('people-names');
+    el.innerHTML = people.map((p, i) => `
+      <input
+        class="person-name-input"
+        type="text"
+        value="${escHtml(p.name)}"
+        placeholder="Person ${i + 1}"
+        oninput="updatePersonName('${p.id}', this.value)"
+        data-person-id="${p.id}"
+      >
+    `).join('');
+  }
+
+  function updatePersonName(id, value) {
+    const p = people.find(x => x.id === id);
+    if (p) p.name = value;
+    renderSelection();
+    renderSummary();
+  }
+
+  function renderSelection() {
+    const list = document.getElementById('selection-list');
+
+    if (receiptData.items.length === 0) {
+      list.innerHTML = `
+        <div style="padding:20px 18px; color:var(--muted); font-size:14px; text-align:center">
+          Add items above to start assigning them to people.
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = receiptData.items.map(item => {
+      const sel = selections[item.id] || new Set();
+      const chips = people.map((p, i) => {
+        const name = getPersonName(p, i);
+        const selected = sel.has(p.id);
+        return `
+          <button
+            class="person-chip ${selected ? 'selected' : ''}"
+            data-item="${item.id}"
+            data-person="${p.id}"
+            onclick="toggleSelection('${item.id}', '${p.id}')"
+          >
+            <svg class="chip-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="3 8 6.5 11.5 13 4.5"/>
+            </svg>
+            ${escHtml(name)}
+          </button>`;
+      }).join('');
+
+      return `
+        <div class="selection-item">
+          <div class="selection-item-info">
+            <span class="selection-item-name">${escHtml(item.name || 'Unnamed item')}</span>
+            <span class="selection-item-price">${fmt(item.price)}</span>
+          </div>
+          <div class="person-chips">${chips}</div>
+        </div>`;
+    }).join('');
+
+    checkUnassigned();
+  }
+
+  function renderSummary() {
+    const results = calculate();
+    const el = document.getElementById('summary-content');
+    const sc = receiptData.serviceCharge ? receiptData.serviceCharge.price : 0;
+
+    const anyItems = Object.values(results).some(r => r.subtotal > 0 || r.service > 0);
+
+    if (!anyItems) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">👆</div>
+          <h3>Select items above</h3>
+          <p>Tap who shared each item and the split will appear here automatically.</p>
+        </div>`;
+      return;
+    }
+
+    const cards = people.map((p, i) => {
+      const r = results[p.id];
+      const total = Math.round((r.subtotal + r.service) * 100) / 100;
+      const name = getPersonName(p, i);
+
+      const breakdownHtml = r.items.length > 0 ? `
+        <div class="summary-breakdown">
+          ${r.items.map(it => `
+            <div class="breakdown-item">
+              <span class="breakdown-item-name">${escHtml(it.name)}${it.shared > 1 ? ` ÷${it.shared}` : ''}</span>
+              <span>${fmt(it.price)}</span>
+            </div>`).join('')}
+        </div>` : '';
+
+      return `
+        <div class="person-summary-card">
+          <div class="person-summary-name">${escHtml(name)}</div>
+          ${breakdownHtml}
+          <div class="summary-line" style="margin-top:${r.items.length ? '8px' : '0'}; border-top: ${r.items.length ? '1px solid var(--border)' : 'none'}; padding-top: ${r.items.length ? '8px' : '0'}">
+            <span>Food</span>
+            <span>${fmt(r.subtotal)}</span>
+          </div>
+          ${sc > 0 ? `
+          <div class="summary-line">
+            <span>Service</span>
+            <span>+ ${fmt(r.service)}</span>
+          </div>` : ''}
+          <div class="summary-line total">
+            <span>Total</span>
+            <span>${fmt(total)}</span>
+          </div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="summary-cards">${cards}</div>`;
+  }
+
+  // ─── Copy summary ─────────────────────────────────────────────────────────
+
+  function copySummary() {
+    const results = calculate();
+    const sc = receiptData.serviceCharge ? receiptData.serviceCharge.price : 0;
+
+    let text = 'Bill Split Summary\n';
+    text += '──────────────────\n';
+
+    people.forEach((p, i) => {
+      const r = results[p.id];
+      const total = Math.round((r.subtotal + r.service) * 100) / 100;
+      const name = getPersonName(p, i);
+      text += `\n${name}\n`;
+      r.items.forEach(it => {
+        const label = it.shared > 1 ? `${it.name} (÷${it.shared})` : it.name;
+        text += `  ${label}: ${fmt(it.price)}\n`;
+      });
+      text += `  Food subtotal: ${fmt(r.subtotal)}\n`;
+      if (sc > 0) text += `  Service: ${fmt(r.service)}\n`;
+      text += `  Total: ${fmt(total)}\n`;
+    });
+
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+      }, 2000);
+    }).catch(() => alert(text));
+  }
+
+  // ─── OCR debug panel ─────────────────────────────────────────────────────
+
+  function toggleOcrDebug() {
+    const body  = document.getElementById('ocr-debug-body');
+    const label = document.getElementById('ocr-toggle-label');
+    const open  = body.style.display === 'none';
+    body.style.display  = open ? 'block' : 'none';
+    label.textContent   = open ? 'Hide ▲' : 'Show ▼';
+  }
+
+  // ─── Utils ────────────────────────────────────────────────────────────────
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // ─── Start ────────────────────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
