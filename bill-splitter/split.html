@@ -353,6 +353,10 @@
       color: var(--selected-text);
     }
 
+    .all-chip {
+      font-weight: 600;
+    }
+
     .chip-check {
       width: 14px;
       height: 14px;
@@ -470,7 +474,7 @@
 
     /* ── Responsive ── */
     @media (max-width: 480px) {
-      .summary-cards { grid-template-columns: 1fr 1fr; }
+      .summary-cards { grid-template-columns: 1fr; }
       .people-names { grid-template-columns: 1fr 1fr; }
     }
   </style>
@@ -590,6 +594,7 @@
 
   let people = []; // [{ id, name }]
   let selections = {}; // { itemId: Set<personId> }
+  let allMode = {};   // { itemId: boolean } — true when "All" chip is active
   let currency = '£';
   let idCounter = 0;
 
@@ -632,6 +637,7 @@
     // Initialise selections
     receiptData.items.forEach(item => {
       selections[item.id] = new Set();
+      allMode[item.id] = false;
     });
 
     renderAll();
@@ -653,6 +659,12 @@
     } else {
       people = people.slice(0, n);
     }
+    // Keep allMode selections in sync when people are added/removed
+    receiptData.items.forEach(item => {
+      if (allMode[item.id]) {
+        selections[item.id] = new Set(people.map(p => p.id));
+      }
+    });
     document.getElementById('people-count-display').textContent = people.length;
     document.getElementById('btn-minus').disabled = people.length <= 1;
     renderPeople();
@@ -670,6 +682,7 @@
     const item = { id: uid(), name: '', price: 0 };
     receiptData.items.push(item);
     selections[item.id] = new Set();
+    allMode[item.id] = false;
     renderItems();
     renderSelection();
     renderSummary();
@@ -683,6 +696,7 @@
   function deleteItem(id) {
     receiptData.items = receiptData.items.filter(i => i.id !== id);
     delete selections[id];
+    delete allMode[id];
     renderItems();
     renderReceiptTotals();
     renderSelection();
@@ -717,16 +731,33 @@
 
   // ─── Selections ───────────────────────────────────────────────────────────
 
+  function toggleAll(itemId) {
+    if (allMode[itemId]) {
+      // Deactivate — deselect everyone
+      allMode[itemId] = false;
+      selections[itemId] = new Set();
+    } else {
+      // Activate — select everyone; individual chips will appear unselected
+      allMode[itemId] = true;
+      selections[itemId] = new Set(people.map(p => p.id));
+    }
+    renderSelection();
+    renderSummary();
+    checkUnassigned();
+  }
+
   function toggleSelection(itemId, personId) {
-    const sel = selections[itemId];
-    if (!sel) return;
-    if (sel.has(personId)) sel.delete(personId);
-    else sel.add(personId);
-
-    // Update chip UI
-    const chip = document.querySelector(`[data-item="${itemId}"][data-person="${personId}"]`);
-    if (chip) chip.classList.toggle('selected', sel.has(personId));
-
+    if (allMode[itemId]) {
+      // Leave "All" mode: keep everyone selected except the tapped person
+      allMode[itemId] = false;
+      selections[itemId].delete(personId);
+    } else {
+      const sel = selections[itemId];
+      if (!sel) return;
+      if (sel.has(personId)) sel.delete(personId);
+      else sel.add(personId);
+    }
+    renderSelection();
     renderSummary();
     checkUnassigned();
   }
@@ -912,9 +943,23 @@
 
     list.innerHTML = receiptData.items.map(item => {
       const sel = selections[item.id] || new Set();
+      const isAllMode = allMode[item.id];
+
+      const allChip = people.length > 1 ? `
+          <button
+            class="person-chip all-chip ${isAllMode ? 'selected' : ''}"
+            onclick="toggleAll('${item.id}')"
+          >
+            <svg class="chip-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="3 8 6.5 11.5 13 4.5"/>
+            </svg>
+            All
+          </button>` : '';
+
       const chips = people.map((p, i) => {
         const name = getPersonName(p, i);
-        const selected = sel.has(p.id);
+        // When "All" mode is active, individual chips show as unselected
+        const selected = !isAllMode && sel.has(p.id);
         return `
           <button
             class="person-chip ${selected ? 'selected' : ''}"
@@ -935,7 +980,7 @@
             <span class="selection-item-name">${escHtml(item.name || 'Unnamed item')}</span>
             <span class="selection-item-price">${fmt(item.price)}</span>
           </div>
-          <div class="person-chips">${chips}</div>
+          <div class="person-chips">${allChip}${chips}</div>
         </div>`;
     }).join('');
 
