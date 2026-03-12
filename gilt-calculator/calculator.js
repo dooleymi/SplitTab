@@ -149,6 +149,43 @@ document.getElementById('calcBtn').addEventListener('click', () => {
   // YTM for discount gilts — that's the core advantage.
   const taxEquivYield = taxRate > 0 ? yieldPost / (1 - taxRate) : yieldPost;
 
+  // ── Bond-basis (ICMA) convention ────────────────────────────────────────
+  // t in semi-annual periods; first period is fractional
+  function buildCFsPeriodic(semi) {
+    const cfs = [-dirtyPrice], ts = [0];
+    futureDates.forEach((d, i) => {
+      ts.push(daysBetween(settlementDate, d) / daysInPeriod);
+      cfs.push(i < futureDates.length - 1 ? semi : semi + 100);
+    });
+    return { cfs, ts };
+  }
+
+  const preTaxPeriodic  = buildCFsPeriodic(semiCoupon);
+  const postTaxPeriodic = buildCFsPeriodic(afterTaxSemi);
+
+  const semiRPre  = solveIRR(preTaxPeriodic.cfs,  preTaxPeriodic.ts);
+  const semiRPost = solveIRR(postTaxPeriodic.cfs, postTaxPeriodic.ts);
+  const ytmBondPre  = semiRPre  * 2;
+  const ytmBondPost = semiRPost * 2;
+  const ytmEffPre   = Math.pow(1 + semiRPre,  2) - 1;
+  const ytmEffPost  = Math.pow(1 + semiRPost, 2) - 1;
+
+  // Per-row data for cash flow table
+  const cfRows = futureDates.map((d, i) => {
+    const isLast    = i === futureDates.length - 1;
+    const tSemi     = daysBetween(settlementDate, d) / daysInPeriod;
+    const grossCF   = isLast ? semiCoupon + 100 : semiCoupon;
+    const aftTaxCF  = isLast ? afterTaxSemi + 100 : afterTaxSemi;
+    const pv        = aftTaxCF / Math.pow(1 + semiRPost, tSemi);
+    return { n: i + 1, date: d, tSemi, grossCF, aftTaxCF, pv, isLast };
+  });
+
+  const totalPVTable = cfRows.reduce((s, r) => s + r.pv, 0);
+  const tFinal       = cfRows[cfRows.length - 1].tSemi;
+  const parPV        = 100 / Math.pow(1 + semiRPost, tFinal);
+  const couponPVPct  = (totalPVTable - parPV) / dirtyPrice;
+  const parPVPct     = parPV / dirtyPrice;
+
   // ── Render ───────────────────────────────────────────────────────────
   const taxLabel = taxEl.value + '%';
 
@@ -179,7 +216,7 @@ document.getElementById('calcBtn').addEventListener('click', () => {
       <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Gilt Pre-Tax YTM</p>
         <p class="text-2xl font-bold text-slate-800">${pct(yieldPre)}</p>
-        <p class="text-xs text-slate-400 mt-1">Gross redemption yield</p>
+        <p class="text-xs text-slate-400 mt-1">Gross effective annualised yield</p>
       </div>
       <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
         <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Gilt After-Tax YTM</p>
@@ -273,6 +310,145 @@ document.getElementById('calcBtn').addEventListener('click', () => {
       <p class="font-semibold text-amber-800 mb-1">Premium gilt — capital loss on redemption</p>
       <p class="text-amber-700">Trading above par, the ${gbp(Math.abs(capitalGain), 2)} capital loss at maturity is not tax-deductible. The pre-tax YTM already reflects this, but it cannot be offset against other gains.</p>
     </div>` : ''}
+
+    <!-- Tax treatment of return components -->
+    <div>
+      <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Tax treatment of return components</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-semibold text-slate-800">Coupon income</span>
+            <span class="text-xs font-medium text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">Taxed @ ${taxLabel}</span>
+          </div>
+          <p class="text-xs text-slate-500">Gross: ${(semiCoupon/100).toFixed(4)} per period</p>
+          <p class="text-xs text-slate-500 mt-0.5">Net retained: <strong class="text-slate-700">${(afterTaxSemi/100).toFixed(5)} (${(100 - parseFloat(taxEl.value))}%)</strong></p>
+        </div>
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-sm font-semibold text-slate-800">Capital appreciation</span>
+            <span class="text-xs font-medium text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">Tax free</span>
+          </div>
+          <p class="text-xs text-slate-500">Par − dirty price</p>
+          <p class="text-xs text-slate-500 mt-0.5">100 − ${dirtyPrice.toFixed(3)} = <strong class="text-slate-700">${capitalGain.toFixed(3)} (100% retained)</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- After-tax cash flows & present values -->
+    <div>
+      <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">After-tax cash flows &amp; present values</h3>
+      <div class="overflow-x-auto -mx-1">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-slate-200">
+              <th class="text-left text-slate-500 font-medium pb-2 pr-2">#</th>
+              <th class="text-left text-slate-500 font-medium pb-2 pr-2">Date</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-2">t (periods)</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-2">Gross CF</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-2">After-tax CF</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-2">PV</th>
+              <th class="text-right text-slate-500 font-medium pb-2">Weight</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${cfRows.map(r => {
+              const weightPct = (r.pv / totalPVTable * 100).toFixed(1);
+              const barW = Math.round(r.pv / totalPVTable * 100);
+              return `<tr>
+                <td class="py-2 pr-2 text-slate-500">${r.n}</td>
+                <td class="py-2 pr-2 text-slate-700 whitespace-nowrap">${fmtDate(r.date)}</td>
+                <td class="py-2 pr-2 text-right text-slate-700">${r.tSemi.toFixed(4)}</td>
+                <td class="py-2 pr-2 text-right text-slate-700">${r.grossCF.toFixed(5)}</td>
+                <td class="py-2 pr-2 text-right text-blue-600 font-medium">${r.aftTaxCF.toFixed(5)}</td>
+                <td class="py-2 pr-2 text-right text-slate-700">${r.pv.toFixed(5)}</td>
+                <td class="py-2 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <div class="w-16 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div class="h-1.5 rounded-full ${r.isLast ? 'bg-emerald-600' : 'bg-slate-400'}" style="width:${barW}%"></div>
+                    </div>
+                    <span class="text-slate-500 w-8 text-right">${weightPct}%</span>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+          <tfoot>
+            <tr class="border-t border-slate-200">
+              <td colspan="5" class="pt-2 text-right text-slate-500 font-medium">Total PV</td>
+              <td class="pt-2 text-right font-bold text-slate-800">${totalPVTable.toFixed(5)}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Return decomposition -->
+    <div>
+      <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Return decomposition — where yield comes from</h3>
+      <p class="text-xs text-slate-500 mb-3">PV of after-tax coupons vs PV of capital gain as % of dirty price</p>
+      <div class="relative w-full h-8 rounded-md overflow-hidden flex">
+        <div class="h-full bg-blue-600 flex items-center justify-center text-white text-xs font-medium" style="width:${Math.max(couponPVPct * 100, 0).toFixed(1)}%">
+          ${couponPVPct >= 0.05 ? (couponPVPct * 100).toFixed(1) + '%' : ''}
+        </div>
+        <div class="h-full bg-emerald-700 flex items-center justify-center text-white text-xs font-medium flex-1">
+          ${(parPVPct * 100).toFixed(1)}%
+        </div>
+      </div>
+      <div class="flex gap-4 mt-2 text-xs text-slate-600">
+        <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-blue-600"></span>After-tax coupons ${(couponPVPct * 100).toFixed(1)}%</span>
+        <span class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-700"></span>Principal / capital gain ${(parPVPct * 100).toFixed(1)}%</span>
+      </div>
+    </div>
+
+    <!-- Summary comparison -->
+    <div>
+      <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Summary comparison</h3>
+      <div class="overflow-x-auto -mx-1">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-slate-200">
+              <th class="text-left text-slate-500 font-medium pb-2 pr-3">Measure</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-3">Pre-tax</th>
+              <th class="text-right text-slate-500 font-medium pb-2 pr-3">After-tax (${taxLabel} on coupons)</th>
+              <th class="text-right text-slate-500 font-medium pb-2">Reduction</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr>
+              <td class="py-2 pr-3 text-slate-600">Semi-annual r</td>
+              <td class="py-2 pr-3 text-right text-slate-700">${pct(semiRPre, 4)}</td>
+              <td class="py-2 pr-3 text-right text-blue-600 font-medium">${pct(semiRPost, 4)}</td>
+              <td class="py-2 text-right text-slate-500">${((semiRPre - semiRPost) * 10000).toFixed(2)} bps lower</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-3 text-slate-600">YTM — bond basis</td>
+              <td class="py-2 pr-3 text-right text-slate-700">${pct(ytmBondPre, 3)}</td>
+              <td class="py-2 pr-3 text-right text-blue-600 font-medium">${pct(ytmBondPost, 3)}</td>
+              <td class="py-2 text-right text-slate-500">${((ytmBondPre - ytmBondPost) * 10000).toFixed(2)} bps lower</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-3 text-slate-600">YTM — effective annual</td>
+              <td class="py-2 pr-3 text-right text-slate-700">${pct(ytmEffPre, 3)}</td>
+              <td class="py-2 pr-3 text-right text-blue-600 font-medium">${pct(ytmEffPost, 3)}</td>
+              <td class="py-2 text-right text-slate-500">${((ytmEffPre - ytmEffPost) * 10000).toFixed(2)} bps lower</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-3 text-slate-600">Capital gain (tax-free)</td>
+              <td class="py-2 pr-3 text-right text-slate-700">${capitalGain.toFixed(3)}</td>
+              <td class="py-2 pr-3 text-right text-blue-600 font-medium">${capitalGain.toFixed(3)}</td>
+              <td class="py-2 text-right text-slate-500">unchanged</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-3 text-slate-600">Coupon per period (net)</td>
+              <td class="py-2 pr-3 text-right text-slate-700">${(semiCoupon/100).toFixed(4)}</td>
+              <td class="py-2 pr-3 text-right text-blue-600 font-medium">${(afterTaxSemi/100).toFixed(4)}</td>
+              <td class="py-2 text-right text-slate-500">${taxLabel} withheld</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   `;
 
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
