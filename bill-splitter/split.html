@@ -19,6 +19,8 @@
       --selected: #111;
       --selected-text: #fff;
       --green: #10b981;
+      --group-color: #4f46e5;
+      --group-light: #eef2ff;
       --radius: 12px;
     }
 
@@ -171,6 +173,28 @@
 
     .btn-delete:hover { background: #fee2e2; color: #ef4444; }
 
+    .btn-sc {
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-sc:hover { background: var(--light); }
+    .btn-sc.excluded {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+      text-decoration: line-through;
+    }
+
     .summary-row {
       display: flex;
       justify-content: space-between;
@@ -285,6 +309,101 @@
 
     .person-name-input:focus { border-color: var(--accent); }
 
+    /* ── Groups management ── */
+    .groups-section {
+      border-top: 1px solid var(--border);
+      padding: 14px 18px;
+    }
+
+    .groups-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .groups-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .btn-add-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-add-group:hover { background: var(--light); color: var(--text); }
+
+    .group-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .group-row:last-child { margin-bottom: 0; }
+
+    .group-name-input {
+      width: 120px;
+      flex-shrink: 0;
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .group-name-input:focus { border-color: var(--group-color); }
+
+    .group-member-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .group-member-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 100px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+      user-select: none;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .group-member-chip:hover { border-color: #818cf8; color: var(--group-color); }
+
+    .group-member-chip.selected {
+      background: var(--group-light);
+      border-color: #818cf8;
+      color: var(--group-color);
+      font-weight: 500;
+    }
+
     /* ── Selection section ── */
     .selection-hint {
       font-size: 13px;
@@ -326,6 +445,14 @@
       gap: 8px;
     }
 
+    .chips-divider {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+      margin: 0 2px;
+      flex-shrink: 0;
+    }
+
     .person-chip {
       display: inline-flex;
       align-items: center;
@@ -364,6 +491,37 @@
     }
 
     .person-chip.selected .chip-check { display: inline; }
+
+    /* Group selection chips (in "Who had what") */
+    .group-chip-select {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1.5px dashed #c7d2fe;
+      background: var(--surface);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #818cf8;
+      user-select: none;
+    }
+
+    .group-chip-select:hover {
+      border-color: #818cf8;
+      background: var(--group-light);
+    }
+
+    .group-chip-select.selected {
+      background: var(--group-color);
+      border-color: var(--group-color);
+      border-style: solid;
+      color: white;
+    }
+
+    .group-chip-select.selected .chip-check { display: inline; }
 
     /* ── Summary section ── */
     .summary-cards {
@@ -421,6 +579,10 @@
       padding: 2px 0;
     }
 
+    .breakdown-item.via-group {
+      color: #a5b4fc;
+    }
+
     .breakdown-item-name {
       flex: 1;
       margin-right: 8px;
@@ -443,6 +605,17 @@
 
     .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
     .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ── Discrepancy warning ── */
+    .discrepancy-warning {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #991b1b;
+      margin: 0 0 12px;
+    }
 
     /* ── Unassigned items warning ── */
     .unassigned-warning {
@@ -535,6 +708,7 @@
       </div>
     </div>
     <div class="people-names" id="people-names"></div>
+    <div id="groups-section"></div>
   </div>
 
   <!-- Who had what -->
@@ -595,7 +769,9 @@
   };
 
   let people = []; // [{ id, name }]
+  let groups = [];  // [{ id, name, memberIds: [] }]
   let selections = {}; // { itemId: Set<personId> }
+  let groupSelections = {}; // { itemId: Set<groupId> }
   let allMode = {};   // { itemId: boolean } — true when "All" chip is active
   let currency = '£';
   let idCounter = 0;
@@ -620,7 +796,6 @@
       const title = card.querySelector('.card-title');
       card.style.display = 'block';
       document.getElementById('ocr-raw-text').textContent = receiptData.rawText;
-      // Label the panel based on which backend produced the output
       const isClaude = receiptData.rawText.trim().startsWith('{') || receiptData.rawText.trim().startsWith('[');
       title.textContent = isClaude ? 'Claude AI response' : 'Raw OCR text';
     }
@@ -639,6 +814,7 @@
     // Initialise selections
     receiptData.items.forEach(item => {
       selections[item.id] = new Set();
+      groupSelections[item.id] = new Set();
       allMode[item.id] = false;
     });
 
@@ -659,7 +835,12 @@
         people.push({ id: uid(), name: '' });
       }
     } else {
+      const removedIds = new Set(people.slice(n).map(p => p.id));
       people = people.slice(0, n);
+      // Remove departed people from all groups
+      groups.forEach(g => {
+        g.memberIds = g.memberIds.filter(id => !removedIds.has(id));
+      });
     }
     // Keep allMode selections in sync when people are added/removed
     receiptData.items.forEach(item => {
@@ -670,6 +851,7 @@
     document.getElementById('people-count-display').textContent = people.length;
     document.getElementById('btn-minus').disabled = people.length <= 1;
     renderPeople();
+    renderGroups();
     renderSelection();
     renderSummary();
   }
@@ -678,12 +860,54 @@
     return person.name.trim() || `Person ${index + 1}`;
   }
 
+  // ─── Groups management ────────────────────────────────────────────────────
+
+  function addGroup() {
+    groups.push({ id: uid(), name: '', memberIds: [] });
+    renderGroups();
+    renderSelection();
+    renderSummary();
+    // Focus the new group's name input
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('.group-name-input');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }, 50);
+  }
+
+  function deleteGroup(groupId) {
+    groups = groups.filter(g => g.id !== groupId);
+    // Remove group from all item selections
+    Object.values(groupSelections).forEach(s => s.delete(groupId));
+    renderGroups();
+    renderSelection();
+    renderSummary();
+  }
+
+  function updateGroupName(groupId, value) {
+    const g = groups.find(x => x.id === groupId);
+    if (g) g.name = value;
+    renderSelection();
+    renderSummary();
+  }
+
+  function toggleGroupMember(groupId, personId) {
+    const g = groups.find(x => x.id === groupId);
+    if (!g) return;
+    const idx = g.memberIds.indexOf(personId);
+    if (idx >= 0) g.memberIds.splice(idx, 1);
+    else g.memberIds.push(personId);
+    renderGroups();
+    renderSelection();
+    renderSummary();
+  }
+
   // ─── Items management ─────────────────────────────────────────────────────
 
   function addItem() {
     const item = { id: uid(), name: '', price: 0 };
     receiptData.items.push(item);
     selections[item.id] = new Set();
+    groupSelections[item.id] = new Set();
     allMode[item.id] = false;
     renderItems();
     renderSelection();
@@ -698,6 +922,7 @@
   function deleteItem(id) {
     receiptData.items = receiptData.items.filter(i => i.id !== id);
     delete selections[id];
+    delete groupSelections[id];
     delete allMode[id];
     renderItems();
     renderReceiptTotals();
@@ -731,15 +956,21 @@
     renderSummary();
   }
 
+  function toggleItemServiceCharge(id) {
+    const item = receiptData.items.find(i => i.id === id);
+    if (!item) return;
+    item.serviceChargeable = item.serviceChargeable !== false ? false : true;
+    renderItems();
+    renderSummary();
+  }
+
   // ─── Selections ───────────────────────────────────────────────────────────
 
   function toggleAll(itemId) {
     if (allMode[itemId]) {
-      // Deactivate — deselect everyone
       allMode[itemId] = false;
       selections[itemId] = new Set();
     } else {
-      // Activate — select everyone; individual chips will appear unselected
       allMode[itemId] = true;
       selections[itemId] = new Set(people.map(p => p.id));
     }
@@ -750,7 +981,6 @@
 
   function toggleSelection(itemId, personId) {
     if (allMode[itemId]) {
-      // Leave "All" mode: keep everyone selected except the tapped person
       allMode[itemId] = false;
       selections[itemId].delete(personId);
     } else {
@@ -764,10 +994,22 @@
     checkUnassigned();
   }
 
+  function toggleGroupSelection(itemId, groupId) {
+    const sel = groupSelections[itemId];
+    if (!sel) return;
+    if (sel.has(groupId)) sel.delete(groupId);
+    else sel.add(groupId);
+    renderSelection();
+    renderSummary();
+    checkUnassigned();
+  }
+
   function checkUnassigned() {
     const anyUnassigned = receiptData.items.some(item => {
-      const s = selections[item.id];
-      return !s || s.size === 0;
+      const directSel = selections[item.id];
+      const groupSel = groupSelections[item.id];
+      const hasDirectOrGroup = (directSel && directSel.size > 0) || (groupSel && groupSel.size > 0);
+      return !hasDirectOrGroup;
     });
     document.getElementById('unassigned-warning').style.display =
       anyUnassigned && receiptData.items.length > 0 ? 'block' : 'none';
@@ -778,34 +1020,63 @@
   function calculate() {
     const results = {};
     people.forEach((p, i) => {
-      results[p.id] = { name: getPersonName(p, i), subtotal: 0, service: 0, items: [] };
+      results[p.id] = { name: getPersonName(p, i), subtotal: 0, scSubtotal: 0, service: 0, items: [] };
     });
 
     let assignedSubtotal = 0;
+    let scAssignedSubtotal = 0;
 
     receiptData.items.forEach(item => {
-      const assignedTo = [...(selections[item.id] || [])].filter(pid => results[pid]);
-      if (assignedTo.length === 0) return;
+      // Collect directly selected people (valid person IDs only)
+      const directIds = new Set([...(selections[item.id] || [])].filter(pid => results[pid]));
 
-      const share = Math.round((item.price / assignedTo.length) * 100) / 100;
-      assignedTo.forEach(pid => {
-        results[pid].subtotal += share;
-        results[pid].items.push({ name: item.name || 'Item', price: share, shared: assignedTo.length });
+      // Collect group-selected people, tracking which group they came through
+      // personId -> groupName (first matching group wins for display purposes)
+      const groupMemberMap = new Map();
+      const selectedGroupIds = groupSelections[item.id] || new Set();
+      selectedGroupIds.forEach(gid => {
+        const group = groups.find(g => g.id === gid);
+        if (!group) return;
+        const groupName = group.name.trim() || 'Group';
+        group.memberIds.forEach(pid => {
+          if (results[pid] && !directIds.has(pid) && !groupMemberMap.has(pid)) {
+            groupMemberMap.set(pid, groupName);
+          }
+        });
       });
+
+      // All unique people sharing this item
+      const allIds = [...directIds, ...groupMemberMap.keys()];
+      if (allIds.length === 0) return;
+
+      const share = item.price / allIds.length;
+
+      allIds.forEach(pid => {
+        const viaGroup = groupMemberMap.get(pid) || null;
+        results[pid].subtotal += share;
+        results[pid].items.push({
+          name: item.name || 'Item',
+          price: share,
+          shared: allIds.length,
+          viaGroup,
+          serviceChargeable: item.serviceChargeable !== false
+        });
+      });
+
       assignedSubtotal += item.price;
+
+      if (item.serviceChargeable !== false) {
+        allIds.forEach(pid => { results[pid].scSubtotal += share; });
+        scAssignedSubtotal += item.price;
+      }
     });
 
-    // Round subtotals
-    Object.values(results).forEach(r => {
-      r.subtotal = Math.round(r.subtotal * 100) / 100;
-    });
-
-    // Distribute service charge proportionally
+    // Distribute service charge proportionally (SC-eligible items only)
     const sc = receiptData.serviceCharge ? receiptData.serviceCharge.price : 0;
-    if (sc > 0 && assignedSubtotal > 0) {
+    if (sc > 0 && scAssignedSubtotal > 0) {
       people.forEach(p => {
-        const proportion = results[p.id].subtotal / assignedSubtotal;
-        results[p.id].service = Math.round(sc * proportion * 100) / 100;
+        const proportion = results[p.id].scSubtotal / scAssignedSubtotal;
+        results[p.id].service = sc * proportion;
       });
     }
 
@@ -818,6 +1089,7 @@
     renderItems();
     renderReceiptTotals();
     renderPeople();
+    renderGroups();
     renderSelection();
     renderSummary();
     updateItemCountBadge();
@@ -867,6 +1139,9 @@
           onchange="updateItemPrice('${item.id}', this.value)"
           onblur="updateItemPrice('${item.id}', this.value)"
         >
+        <button class="btn-sc${item.serviceChargeable === false ? ' excluded' : ''}"
+          onclick="toggleItemServiceCharge('${item.id}')"
+          title="${item.serviceChargeable === false ? 'Click to include in service charge' : 'Click to exclude from service charge'}">SC</button>
         <button class="btn-delete" onclick="deleteItem('${item.id}')" title="Remove item">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -925,9 +1200,59 @@
     `).join('');
   }
 
+  function renderGroups() {
+    const el = document.getElementById('groups-section');
+
+    const groupRows = groups.map(g => {
+      const memberChips = people.map((p, i) => {
+        const name = getPersonName(p, i);
+        const isMember = g.memberIds.includes(p.id);
+        return `
+          <button
+            class="group-member-chip ${isMember ? 'selected' : ''}"
+            onclick="toggleGroupMember('${g.id}', '${p.id}')"
+          >${escHtml(name)}</button>`;
+      }).join('');
+
+      return `
+        <div class="group-row">
+          <input
+            class="group-name-input"
+            type="text"
+            value="${escHtml(g.name)}"
+            placeholder="Group name"
+            oninput="updateGroupName('${g.id}', this.value)"
+          >
+          <div class="group-member-chips">${memberChips}</div>
+          <button class="btn-delete" onclick="deleteGroup('${g.id}')" title="Remove group">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="groups-section">
+        <div class="groups-header">
+          <span class="groups-label">Groups</span>
+          <button class="btn-add-group" onclick="addGroup()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add group
+          </button>
+        </div>
+        ${groups.length === 0
+          ? `<p style="font-size:13px; color:var(--muted)">Group people together so items can be split within a group.</p>`
+          : groupRows}
+      </div>`;
+  }
+
   function updatePersonName(id, value) {
     const p = people.find(x => x.id === id);
     if (p) p.name = value;
+    renderGroups();
     renderSelection();
     renderSummary();
   }
@@ -945,6 +1270,7 @@
 
     list.innerHTML = receiptData.items.map(item => {
       const sel = selections[item.id] || new Set();
+      const gSel = groupSelections[item.id] || new Set();
       const isAllMode = allMode[item.id];
 
       const allChip = people.length > 1 ? `
@@ -960,7 +1286,6 @@
 
       const chips = people.map((p, i) => {
         const name = getPersonName(p, i);
-        // When "All" mode is active, individual chips show as unselected
         const selected = !isAllMode && sel.has(p.id);
         return `
           <button
@@ -976,13 +1301,33 @@
           </button>`;
       }).join('');
 
+      const groupChips = groups.length > 0
+        ? `<div class="chips-divider"></div>` + groups.map(g => {
+            const name = g.name.trim() || 'Group';
+            const selected = gSel.has(g.id);
+            const memberCount = g.memberIds.length;
+            const label = memberCount > 0 ? `${escHtml(name)} (${memberCount})` : escHtml(name);
+            return `
+              <button
+                class="group-chip-select ${selected ? 'selected' : ''}"
+                onclick="toggleGroupSelection('${item.id}', '${g.id}')"
+                title="${escHtml(name)}: ${memberCount} member${memberCount !== 1 ? 's' : ''}"
+              >
+                <svg class="chip-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="3 8 6.5 11.5 13 4.5"/>
+                </svg>
+                ${label}
+              </button>`;
+          }).join('')
+        : '';
+
       return `
         <div class="selection-item">
           <div class="selection-item-info">
             <span class="selection-item-name">${escHtml(item.name || 'Unnamed item')}</span>
             <span class="selection-item-price">${fmt(item.price)}</span>
           </div>
-          <div class="person-chips">${allChip}${chips}</div>
+          <div class="person-chips">${allChip}${chips}${groupChips}</div>
         </div>`;
     }).join('');
 
@@ -1006,41 +1351,67 @@
       return;
     }
 
+    // Compute bill total and per-person totals, then check for discrepancy
+    const billTotal = Math.round((receiptData.items.reduce((s, i) => s + i.price, 0) + sc) * 100) / 100;
+    const personTotals = {};
+    people.forEach(p => {
+      const r = results[p.id];
+      personTotals[p.id] = Math.round((r.subtotal + r.service) * 100) / 100;
+    });
+    const sumOfShares = Math.round(Object.values(personTotals).reduce((s, t) => s + t, 0) * 100) / 100;
+    const discrepancy = Math.round((billTotal - sumOfShares) * 100) / 100;
+
+    let discrepancyWarning = null;
+    if (discrepancy !== 0 && people.length > 0) {
+      if (Math.abs(discrepancy) <= 0.01) {
+        personTotals[people[0].id] = Math.round((personTotals[people[0].id] + discrepancy) * 100) / 100;
+      } else {
+        discrepancyWarning = discrepancy;
+      }
+    }
+
     const cards = people.map((p, i) => {
       const r = results[p.id];
-      const total = Math.round((r.subtotal + r.service) * 100) / 100;
+      const total = personTotals[p.id];
       const name = getPersonName(p, i);
 
-      const breakdownHtml = r.items.length > 0 ? `
-        <div class="summary-breakdown">
-          ${r.items.map(it => `
-            <div class="breakdown-item">
-              <span class="breakdown-item-name">${escHtml(it.name)}${it.shared > 1 ? ` ÷${it.shared}` : ''}</span>
-              <span>${fmt(it.price)}</span>
-            </div>`).join('')}
-        </div>` : '';
+      const scItems = r.items.filter(it => it.serviceChargeable);
+      const nonScItems = r.items.filter(it => !it.serviceChargeable);
+
+      const itemRowHtml = items => items.map(it => {
+        const shareLabel = it.shared > 1 ? ` ÷${it.shared}` : '';
+        const groupLabel = it.viaGroup ? ` · ${it.viaGroup}` : '';
+        return `
+          <div class="breakdown-item${it.viaGroup ? ' via-group' : ''}">
+            <span class="breakdown-item-name">${escHtml(it.name)}${shareLabel}${escHtml(groupLabel)}</span>
+            <span>${it.price.toFixed(4)}</span>
+          </div>`;
+      }).join('');
+
+      const hasItems = r.items.length > 0;
 
       return `
         <div class="person-summary-card">
           <div class="person-summary-name">${escHtml(name)}</div>
-          ${breakdownHtml}
-          <div class="summary-line" style="margin-top:${r.items.length ? '8px' : '0'}; border-top: ${r.items.length ? '1px solid var(--border)' : 'none'}; padding-top: ${r.items.length ? '8px' : '0'}">
-            <span>Food</span>
-            <span>${fmt(r.subtotal)}</span>
-          </div>
+          ${hasItems ? `<div class="summary-breakdown">${itemRowHtml(scItems)}</div>` : ''}
           ${sc > 0 ? `
-          <div class="summary-line">
+          <div class="summary-line" style="margin-top:${scItems.length ? '8px' : '0'}; border-top:${scItems.length ? '1px solid var(--border)' : 'none'}; padding-top:${scItems.length ? '8px' : '0'}">
             <span>Service</span>
             <span>+ ${fmt(r.service)}</span>
           </div>` : ''}
-          <div class="summary-line total">
+          ${nonScItems.length > 0 ? `<div class="summary-breakdown" style="margin-top:8px">${itemRowHtml(nonScItems)}</div>` : ''}
+          <div class="summary-line total" style="margin-top:8px; border-top:1px solid var(--border); padding-top:8px">
             <span>Total</span>
             <span>${fmt(total)}</span>
           </div>
         </div>`;
     }).join('');
 
-    el.innerHTML = `<div class="summary-cards">${cards}</div>`;
+    const warningHtml = discrepancyWarning !== null
+      ? `<div class="discrepancy-warning">Bill total is ${fmt(billTotal)} but shares sum to ${fmt(sumOfShares)} — discrepancy of ${fmt(Math.abs(discrepancyWarning))}. Check item assignments.</div>`
+      : '';
+
+    el.innerHTML = `${warningHtml}<div class="summary-cards">${cards}</div>`;
   }
 
   // ─── Copy summary ─────────────────────────────────────────────────────────
@@ -1057,12 +1428,16 @@
       const total = Math.round((r.subtotal + r.service) * 100) / 100;
       const name = getPersonName(p, i);
       text += `\n${name}\n`;
-      r.items.forEach(it => {
-        const label = it.shared > 1 ? `${it.name} (÷${it.shared})` : it.name;
-        text += `  ${label}: ${fmt(it.price)}\n`;
-      });
-      text += `  Food subtotal: ${fmt(r.subtotal)}\n`;
+      const scItems = r.items.filter(it => it.serviceChargeable);
+      const nonScItems = r.items.filter(it => !it.serviceChargeable);
+      const fmtItem = it => {
+        const shareLabel = it.shared > 1 ? ` (÷${it.shared})` : '';
+        const groupLabel = it.viaGroup ? ` [via ${it.viaGroup}]` : '';
+        return `  ${it.name}${shareLabel}${groupLabel}: ${fmt(it.price)}\n`;
+      };
+      scItems.forEach(it => { text += fmtItem(it); });
       if (sc > 0) text += `  Service: ${fmt(r.service)}\n`;
+      nonScItems.forEach(it => { text += fmtItem(it); });
       text += `  Total: ${fmt(total)}\n`;
     });
 
